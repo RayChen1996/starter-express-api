@@ -2,7 +2,7 @@ const { ApolloServer, gql } = require("apollo-server");
  
 const mongoose = require("mongoose");
 
-
+const cron = require("node-cron");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 // const typeDefs = require("./schema/type");
@@ -14,6 +14,23 @@ mongoose.connect(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
+
+
+const clearDataTable = async () => {
+    try {
+      // Clear the data table, adjust the model name accordingly
+      await Habitgoals.deleteMany({});
+      console.log("Data table cleared at midnight");
+    } catch (error) {
+      console.error("Error clearing data table:", error);
+    }
+  };
+  
+  // Schedule the task to run every day at midnight (00:00)
+  cron.schedule("0 0 * * *", () => {
+    clearDataTable();
+  });
+
 
 const connection = mongoose.connection;
 
