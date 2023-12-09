@@ -1,229 +1,172 @@
-const { ApolloServer, gql } = require("apollo-server");
+//mongodb+srv://ray10315332:GayqbQeJq5Jxh3em@cluster0.pberq7k.mongodb.net/
 
+const express = require("express");
+const { ApolloServer, gql } = require("apollo-server-express");
 const mongoose = require("mongoose");
-
-const cron = require("node-cron");
-const bcrypt = require("bcrypt");
+const { AuthenticationError } = require("apollo-server-errors");
 const jwt = require("jsonwebtoken");
-// const typeDefs = require("./schema/type");
-// const mongoose = require("mongoose");
-require("dotenv").config();
-const uri =
-  "mongodb+srv://ray10315332:GayqbQeJq5Jxh3em@cluster0.pberq7k.mongodb.net/";
-mongoose.connect(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+const bcrypt = require("bcrypt");
+const path = require("path"); // Ensure to include the 'path' module
 
-const clearDataTable = async () => {
-  try {
-    // Clear the data table, adjust the model name accordingly
-    await Habitgoals.deleteMany({});
-    console.log("Data table cleared at midnight");
-  } catch (error) {
-    console.error("Error clearing data table:", error);
-  }
-};
+async function startServer() {
+  const app = express();
 
-const clearTodoCollection = async () => {
-  try {
-    // Clear the data table, adjust the model name accordingly
-    await Todo.deleteMany({});
-    console.log("Data TodoCollection cleared at midnight");
-  } catch (error) {
-    console.error("Error clearing TodoCollection  :", error);
-  }
-};
-
-// Schedule the task to run every day at midnight (00:00)
-cron.schedule("0 0 * * *", () => {
-  clearDataTable();
-  clearTodoCollection();
-});
-
-const connection = mongoose.connection;
-
-connection.once("open", () => {
-  console.log("mogoose connect!!!");
-});
-const User = mongoose.model("User", {
-  email: String,
-  password: String,
-});
-
-const Habitgoals = mongoose.model("habitgoals", {
-  Goal: String,
-  type: Number,
-  frequency: String,
-  fine: Number,
-  note: String,
-  SDate: String,
-  EDate: String,
-});
-// 定义GraphQL Schema
-const typeDefs = gql`
-  type Todo {
-    id: ID!
-    task: String!
-    completed: Boolean!
-  }
-
-  type Habits {
-    id: ID!
-    Goal: String!
-    type: Int!
-    frequency: String!
-    fine: Int!
-    note: String!
-    SDate: String!
-    EDate: String
-  }
-
-  type User {
-    id: ID!
-    email: String!
-  }
-
-  type AuthPayload {
-    token: String!
-  }
-
-  type Query {
-    users: [User]
-    todos: [Todo]
-    todo(id: ID!): Todo
-    Habits: [Habits]
-  }
-
-  type Mutation {
-    register(email: String!, password: String!): AuthPayload
-    login(email: String!, password: String!): AuthPayload
-    addTodo(task: String!): Todo
-    updateTodo(id: ID!, task: String!, completed: Boolean!): Todo
-    deleteTodo(id: ID!): Todo
-    addHabitGoal(Goal: String!): Habits
-    deleteHabits: [Habits]
-  }
-`;
-
-// 4. 提供解析函数
-const resolvers = {
-  Query: {
-    users: () => {
-      try {
-        console.log("Executing users resolver");
-        return User.find();
-      } catch (error) {
-        console.error("Error in users resolver:", error);
-        throw error; // Re-throw the error to ensure it's propagated
-      }
-    },
-    todos: async () => {
-      const todos = await Todo.find();
-      return todos;
-    },
-    todo: async (_, { id }) => {
-      const todo = await Todo.findById(id);
-      return todo;
-    },
-    Habits: async () => {
-      const habits = await Habitgoals.find();
-      return habits;
-    },
-  },
-  Mutation: {
-    register: async (_, { email, password }) => {
-      const existingUser = await User.findOne({ email });
-
-      if (existingUser) {
-        throw new Error("User already exists");
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = new User({ email, password: hashedPassword });
-      await user.save();
-
-      const token = jwt.sign({ userId: user.id }, "your_secret_key", {
-        expiresIn: "7d",
-      });
-
-      return { token };
-    },
-    login: async (_, { email, password }) => {
-      const user = await User.findOne({ email });
-
-      if (!user) {
-        throw new Error("Invalid login credentials");
-      }
-
-      const passwordMatch = await bcrypt.compare(password, user.password);
-
-      if (!passwordMatch) {
-        throw new Error("Invalid login credentials");
-      }
-
-      const token = jwt.sign({ userId: user.id }, "your_secret_key", {
-        expiresIn: "7d",
-      });
-
-      return { token };
-    },
-    addTodo: async (_, { task }) => {
-      const todo = new Todo({ task, completed: false });
-      await todo.save();
-      return todo;
-    },
-    updateTodo: async (_, { id, task, completed }) => {
-      const todo = await Todo.findByIdAndUpdate(
-        id,
-        { task, completed },
-        { new: true }
-      );
-      return todo;
-    },
-    deleteTodo: async (_, { id }) => {
-      const todo = await Todo.findByIdAndDelete(id);
-      return todo;
-    },
-    deleteHabits: async () => {
-      try {
-        const deletedHabits = await Habitgoals.deleteMany({});
-        return deletedHabits;
-      } catch (error) {
-        console.error("Error deleting habits:", error);
-        throw error;
-      }
-    },
-    addHabitGoal: async (_, { Goal }) => {
-      const habit = new Habitgoals({ Goal });
-      await habit.save();
-      return habit;
-    },
-  },
-};
-
-// 5. 连接到 MongoDB 数据库
-mongoose.connect(
-  "mongodb+srv://ray10315332:GayqbQeJq5Jxh3em@cluster0.pberq7k.mongodb.net/",
-  {
+  mongoose.connect("mongodb://127.0.0.1/HabitWebDB", {
+    useNewUrlParser: true,
     useUnifiedTopology: true,
-  }
-);
+  });
 
-// 6. 定义 Todo 模型
-const Todo = mongoose.model("Todo", {
-  task: String,
-  completed: Boolean,
-});
+  const userSchema = new mongoose.Schema({
+    username: String,
+    password: String,
+  });
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
+  const scheduleSchema = new mongoose.Schema({
+    userId: mongoose.Types.ObjectId,
+    todo: String,
+  });
 
-  persistedQueries: false,
-  playground: true,
-});
+  const UserModel = mongoose.model("User", userSchema);
+  const ScheduleModel = mongoose.model("Schedule", scheduleSchema);
 
-server.listen({ port: process.env.PORT || 4000 }).then(({ url }) => {
-  console.log(`Server is ${url}`);
-});
+  const typeDefs = gql`
+    type User {
+      id: ID!
+      username: String!
+    }
+
+    type Schedule {
+      id: ID!
+      userId: ID!
+      todo: String!
+    }
+
+    type AuthPayload {
+      token: String!
+      user: User!
+    }
+
+    type Query {
+      me: User
+      getSchedule: [Schedule]
+    }
+
+    type Mutation {
+      register(username: String!, password: String!): AuthPayload
+      login(username: String!, password: String!): AuthPayload
+      addSchedule(todo: String!): Schedule
+    }
+  `;
+
+  const resolvers = {
+    Query: {
+      me: (parent, args, context) => {
+        if (!context.user) {
+          throw new AuthenticationError("Not authenticated");
+        }
+        return context.user;
+      },
+      getSchedule: async (parent, args, context) => {
+        if (!context.user) {
+          throw new AuthenticationError("Not authenticated");
+        }
+        return ScheduleModel.find({ userId: context.user.id });
+      },
+    },
+    Mutation: {
+      register: async (parent, { username, password }) => {
+        const passwordRegex = /^[A-Z].{5,}$/;
+        if (!passwordRegex.test(password)) {
+          throw new AuthenticationError(
+            "Password must start with an uppercase letter and be at least 6 characters long"
+          );
+        }
+
+        const existingUser = await UserModel.findOne({ username });
+        if (existingUser) {
+          throw new AuthenticationError("User already exists");
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = new UserModel({ username, password: hashedPassword });
+        await newUser.save();
+
+        const token = jwt.sign(
+          { id: newUser.id, username: newUser.username },
+          "your-secret-key",
+          {
+            expiresIn: "1d",
+          }
+        );
+
+        return { token, user: { id: newUser.id, username: newUser.username } };
+      },
+      login: async (parent, { username, password }) => {
+        const user = await UserModel.findOne({ username });
+        if (!user) {
+          throw new AuthenticationError("Invalid username or password");
+        }
+
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+          throw new AuthenticationError("Invalid username or password");
+        }
+
+        const token = jwt.sign(
+          { id: user.id, username: user.username },
+          "your-secret-key",
+          {
+            expiresIn: "1d",
+          }
+        );
+
+        return { token, user: { id: user.id, username: user.username } };
+      },
+      addSchedule: async (parent, { todo }, context) => {
+        if (!context.user) {
+          throw new AuthenticationError("Not authenticated");
+        }
+
+        const newSchedule = new ScheduleModel({
+          userId: context.user.id,
+          todo,
+        });
+        await newSchedule.save();
+
+        return newSchedule;
+      },
+    },
+  };
+
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    context: ({ req }) => {
+      const token = req.headers.authorization || "";
+      try {
+        const user = jwt.verify(token, "your-secret-key");
+        return { user };
+      } catch (error) {
+        return {};
+      }
+    },
+  });
+
+  await server.start();
+  server.applyMiddleware({ app });
+
+  // Add a route for the GraphQL Playground
+  app.get("/playground", (req, res) => {
+    res.sendFile(path.join(__dirname, "public/playground.html"));
+  });
+
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    console.log(
+      `Server is running at http://localhost:${PORT}${server.graphqlPath}`
+    );
+  });
+}
+
+startServer().catch((error) => console.error(error));
