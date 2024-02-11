@@ -42,7 +42,9 @@ cron.schedule("0 0 * * *", () => {
   clearDataTable();
   clearTodoCollection();
 });
-
+cron.schedule("28 13 * * *", () => {
+  console.log("執行任務")
+});
 const connection = mongoose.connection;
 
 connection.once("open", () => {
@@ -283,7 +285,7 @@ const scheduleSchema = new mongoose.Schema({
 
 // 5. 连接到 MongoDB 数据库
 mongoose.connect(
-  "mongodb+srv://ray10315332:GayqbQeJq5Jxh3em@cluster0.pberq7k.mongodb.net/",
+  uri,
   {
     useUnifiedTopology: true,
   }
