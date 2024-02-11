@@ -38,12 +38,13 @@ const clearTodoCollection = async () => {
 };
 
 // Schedule the task to run every day at midnight (00:00)
-cron.schedule("0 0 * * *", () => {
+// cron.schedule("0 0 * * *", () => {
+ 
+// });
+cron.schedule("55 23 * * *", () => {
+  console.log("執行任務")
   clearDataTable();
   clearTodoCollection();
-});
-cron.schedule("28 13 * * *", () => {
-  console.log("執行任務")
 });
 const connection = mongoose.connection;
 
