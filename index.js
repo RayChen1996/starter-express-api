@@ -3,6 +3,7 @@
 const { ApolloServer, gql } = require("apollo-server");
 
 const mongoose = require("mongoose");
+const axios = require('axios');
 
 const cron = require("node-cron");
 const bcrypt = require("bcrypt");
@@ -84,12 +85,18 @@ const typeDefs = gql`
     token: String!
     user: User!
   }
+  
 
   type Query {
     me: User
     getSchedule: [Schedule]
+    analyzeEntities(text: String!): [Entity]
   }
-
+  type Entity {
+    name: String
+    type: String
+    salience: Float
+  }
   type Habits {
     id: ID!
     Goal: String!
@@ -153,6 +160,32 @@ const resolvers = {
     Habits: async () => {
       const habits = await Habitgoals.find();
       return habits;
+    },
+    analyzeEntities: async (_, { text }) => {
+      try {
+        // Your existing code for making the API request to Cloud Natural Language API
+        const apiUrl = 'https://content-language.googleapis.com/v2/documents:analyzeEntities';
+        const apiKey = process.env.GOOGLE_APIKEY;
+
+        const response = await axios.post(`${apiUrl}?key=${apiKey}`, {
+          document: {
+            content: text,
+            type: 'PLAIN_TEXT',
+          },
+        });
+
+        // Extract and format relevant data from the API response
+        const entities = response.data.entities.map(entity => ({
+          name: entity.name,
+          type: entity.type,
+          salience: entity.salience,
+        }));
+
+        return entities;
+      } catch (error) {
+        console.error('Error analyzing entities:', error);
+        throw error;
+      }
     },
   },
   Mutation: {
