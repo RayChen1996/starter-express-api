@@ -10,9 +10,7 @@ const jwt = require("jsonwebtoken");
 // const typeDefs = require("./schema/type");
 // const mongoose = require("mongoose");
 require("dotenv").config();
-
-const uri =
-  "mongodb+srv://ray10315332:GayqbQeJq5Jxh3em@cluster0.pberq7k.mongodb.net/";
+const uri = process.env.MONGODB_URI;
 mongoose.connect(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
