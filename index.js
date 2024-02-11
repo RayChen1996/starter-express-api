@@ -41,6 +41,18 @@ const clearTodoCollection = async () => {
 // cron.schedule("0 0 * * *", () => {
  
 // });
+const fetchReq = async () => {
+  try {
+    // 在這裡添加你的 API endpoint 和相應的 request 設定
+    const response = await axios.get('https://node-typescript-server-749q.onrender.com');
+    console.log('Request sent successfully:', response.data);
+  } catch (error) {
+    console.error('Error sending request:', error.message);
+  }
+};
+cron.schedule("0  * * * *", () => {
+  fetchReq()
+});
 cron.schedule("55 23 * * *", () => {
   console.log("執行任務")
   clearDataTable();
