@@ -1,9 +1,10 @@
 //mongodb+srv://ray10315332:GayqbQeJq5Jxh3em@cluster0.pberq7k.mongodb.net/
 
 const { ApolloServer, gql } = require("apollo-server");
-
+const express = require("express");
+const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-const axios = require('axios');
+const axios = require("axios");
 
 const cron = require("node-cron");
 const bcrypt = require("bcrypt");
@@ -16,7 +17,8 @@ mongoose.connect(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
-
+const app = express();
+app.use(bodyParser.json());
 const clearDataTable = async () => {
   try {
     // Clear the data table, adjust the model name accordingly
@@ -39,22 +41,24 @@ const clearTodoCollection = async () => {
 
 // Schedule the task to run every day at midnight (00:00)
 // cron.schedule("0 0 * * *", () => {
- 
+
 // });
 const fetchReq = async () => {
   try {
     // 在這裡添加你的 API endpoint 和相應的 request 設定
-    const response = await axios.get('https://node-typescript-server-749q.onrender.com');
-    console.log('Request sent successfully:', response.data);
+    const response = await axios.get(
+      "https://node-typescript-server-749q.onrender.com"
+    );
+    console.log("Request sent successfully:", response.data);
   } catch (error) {
-    console.error('Error sending request:', error.message);
+    console.error("Error sending request:", error.message);
   }
 };
 cron.schedule("0  * * * *", () => {
-  fetchReq()
+  fetchReq();
 });
 cron.schedule("55 23 * * *", () => {
-  console.log("執行任務")
+  console.log("執行任務");
   clearDataTable();
   clearTodoCollection();
 });
@@ -78,6 +82,62 @@ const Habitgoals = mongoose.model("habitgoals", {
   EDate: String,
 });
 
+const contactFormSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  message: String,
+  submittedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+const ContactForm = mongoose.model("ContactForm", contactFormSchema);
+
+const templateSchema = new mongoose.Schema({
+  name: String,
+  content: String,
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const Template = mongoose.model("Template", templateSchema);
+const forumPostSchema = new mongoose.Schema({
+  title: String,
+  content: String,
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const ForumPost = mongoose.model("ForumPost", forumPostSchema);
+
+const healthRecordSchema = new mongoose.Schema({
+  description: String,
+  date: Date,
+  reminder: Boolean,
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const HealthRecord = mongoose.model("HealthRecord", healthRecordSchema);
+
+const expenseSchema = new mongoose.Schema({
+  description: String,
+  amount: Number,
+  date: Date,
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const Expense = mongoose.model("Expense", expenseSchema);
+
 // 定义GraphQL Schema
 const typeDefs = gql`
   type Todo {
@@ -90,6 +150,14 @@ const typeDefs = gql`
     username: String!
   }
 
+  type ContactForm {
+    id: ID!
+    name: String!
+    email: String!
+    message: String!
+    submittedAt: String!
+  }
+
   type Schedule {
     id: ID!
     userId: ID!
@@ -100,7 +168,6 @@ const typeDefs = gql`
     token: String!
     user: User!
   }
-  
 
   type Query {
     me: User
@@ -131,24 +198,120 @@ const typeDefs = gql`
   type AuthPayload {
     token: String!
   }
+  type PetStory {
+    id: ID!
+    title: String!
+    content: String!
+    createdAt: String!
+  }
+
+  type Expense {
+    id: ID!
+    description: String!
+    amount: Float!
+    date: String!
+    createdAt: String!
+  }
+
+  type HealthRecord {
+    id: ID!
+    description: String!
+    date: String!
+    reminder: Boolean!
+    createdAt: String!
+  }
+
+  type ForumPost {
+    id: ID!
+    title: String!
+    content: String!
+    createdAt: String!
+  }
+
+  type Template {
+    id: ID!
+    name: String!
+    content: String!
+    createdAt: String!
+  }
 
   type Query {
+    contactForms: [ContactForm]
+
+    # 根据 ID 获取特定的联系表单
+    contactForm(id: ID!): ContactForm
+
+    templates: [Template]
+    template(id: ID!): Template
+
+    healthRecords: [HealthRecord]
+    healthRecord(id: ID!): HealthRecord
+    forumPosts: [ForumPost]
+    forumPost(id: ID!): ForumPost
     users: [User]
     todos: [Todo]
     todo(id: ID!): Todo
     Habits: [Habits]
+
+    petStories: [PetStory]
+    petStory(id: ID!): PetStory
+
+    expenses: [Expense]
+    expense(id: ID!): Expense
   }
 
   type Mutation {
+    createTemplate(name: String!, content: String!): Template
+    updateTemplate(id: ID!, name: String, content: String): Template
+    deleteTemplate(id: ID!): Template
+
+    createForumPost(title: String!, content: String!): ForumPost
+    updateForumPost(id: ID!, title: String, content: String): ForumPost
+    deleteForumPost(id: ID!): ForumPost
+
+    createHealthRecord(
+      description: String!
+      date: String!
+      reminder: Boolean!
+    ): HealthRecord
+    updateHealthRecord(
+      id: ID!
+      description: String
+      date: String
+      reminder: Boolean
+    ): HealthRecord
+    deleteHealthRecord(id: ID!): HealthRecord
+
     register(username: String!, password: String!): AuthPayload
     login(username: String!, password: String!): AuthPayload
     addSchedule(todo: String!): Schedule
+
+    createExpense(description: String!, amount: Float!, date: String!): Expense
+    updateExpense(
+      id: ID!
+      description: String
+      amount: Float
+      date: String
+    ): Expense
+    deleteExpense(id: ID!): Expense
 
     addTodo(task: String!): Todo
     updateTodo(id: ID!, task: String!, completed: Boolean!): Todo
     deleteTodo(id: ID!): Todo
     addHabitGoal(Goal: String!): Habits
     deleteHabits: [Habits]
+    submitContactForm(
+      name: String!
+      email: String!
+      message: String!
+    ): ContactForm
+
+    createPetStory(title: String!, content: String!): PetStory
+    updatePetStory(id: ID!, title: String, content: String): PetStory
+    deletePetStory(id: ID!): PetStory
+
+    updateProfile(username: String, email: String): User
+    changePassword(oldPassword: String!, newPassword: String!): Boolean
   }
 `;
 
@@ -179,18 +342,19 @@ const resolvers = {
     analyzeEntities: async (_, { text }) => {
       try {
         // Your existing code for making the API request to Cloud Natural Language API
-        const apiUrl = 'https://content-language.googleapis.com/v2/documents:analyzeEntities';
+        const apiUrl =
+          "https://content-language.googleapis.com/v2/documents:analyzeEntities";
         const apiKey = process.env.GOOGLE_APIKEY;
 
         const response = await axios.post(`${apiUrl}?key=${apiKey}`, {
           document: {
             content: text,
-            type: 'PLAIN_TEXT',
+            type: "PLAIN_TEXT",
           },
         });
 
         // Extract and format relevant data from the API response
-        const entities = response.data.entities.map(entity => ({
+        const entities = response.data.entities.map((entity) => ({
           name: entity.name,
           type: entity.type,
           salience: entity.salience,
@@ -198,12 +362,194 @@ const resolvers = {
 
         return entities;
       } catch (error) {
-        console.error('Error analyzing entities:', error);
+        console.error("Error analyzing entities:", error);
         throw error;
+      }
+    },
+
+    contactForms: async () => {
+      try {
+        const forms = await ContactForm.find();
+        return forms;
+      } catch (error) {
+        console.error("Error fetching contact forms:", error);
+        throw new Error("Failed to fetch contact forms");
+      }
+    },
+
+    contactForm: async (_, { id }) => {
+      try {
+        const form = await ContactForm.findById(id);
+        if (!form) {
+          throw new Error("Contact form not found");
+        }
+        return form;
+      } catch (error) {
+        console.error("Error fetching contact form:", error);
+        throw new Error("Failed to fetch contact form");
       }
     },
   },
   Mutation: {
+    createTemplate: async (_, { name, content }) => {
+      try {
+        const template = new Template({ name, content });
+        await template.save();
+        return template;
+      } catch (error) {
+        console.error("Error creating template:", error);
+        throw new Error("Failed to create template");
+      }
+    },
+    updateTemplate: async (_, { id, name, content }) => {
+      try {
+        const template = await Template.findByIdAndUpdate(
+          id,
+          { name, content },
+          { new: true }
+        );
+        return template;
+      } catch (error) {
+        console.error("Error updating template:", error);
+        throw new Error("Failed to update template");
+      }
+    },
+    deleteTemplate: async (_, { id }) => {
+      try {
+        const template = await Template.findByIdAndDelete(id);
+        return template;
+      } catch (error) {
+        console.error("Error deleting template:", error);
+        throw new Error("Failed to delete template");
+      }
+    },
+
+    createForumPost: async (_, { title, content }) => {
+      try {
+        const forumPost = new ForumPost({ title, content });
+        await forumPost.save();
+        return forumPost;
+      } catch (error) {
+        console.error("Error creating forum post:", error);
+        throw new Error("Failed to create forum post");
+      }
+    },
+    updateForumPost: async (_, { id, title, content }) => {
+      try {
+        const forumPost = await ForumPost.findByIdAndUpdate(
+          id,
+          { title, content },
+          { new: true }
+        );
+        return forumPost;
+      } catch (error) {
+        console.error("Error updating forum post:", error);
+        throw new Error("Failed to update forum post");
+      }
+    },
+    deleteForumPost: async (_, { id }) => {
+      try {
+        const forumPost = await ForumPost.findByIdAndDelete(id);
+        return forumPost;
+      } catch (error) {
+        console.error("Error deleting forum post:", error);
+        throw new Error("Failed to delete forum post");
+      }
+    },
+
+    createHealthRecord: async (_, { description, date, reminder }) => {
+      try {
+        const healthRecord = new HealthRecord({
+          description,
+          date,
+          reminder,
+        });
+        await healthRecord.save();
+        return healthRecord;
+      } catch (error) {
+        console.error("Error creating health record:", error);
+        throw new Error("Failed to create health record");
+      }
+    },
+    updateHealthRecord: async (_, { id, description, date, reminder }) => {
+      try {
+        const healthRecord = await HealthRecord.findByIdAndUpdate(
+          id,
+          { description, date, reminder },
+          { new: true }
+        );
+        return healthRecord;
+      } catch (error) {
+        console.error("Error updating health record:", error);
+        throw new Error("Failed to update health record");
+      }
+    },
+    deleteHealthRecord: async (_, { id }) => {
+      try {
+        const healthRecord = await HealthRecord.findByIdAndDelete(id);
+        return healthRecord;
+      } catch (error) {
+        console.error("Error deleting health record:", error);
+        throw new Error("Failed to delete health record");
+      }
+    },
+
+    createExpense: async (_, { description, amount, date }) => {
+      try {
+        const expense = new Expense({
+          description,
+          amount,
+          date,
+        });
+        await expense.save();
+        return expense;
+      } catch (error) {
+        console.error("Error creating expense:", error);
+        throw new Error("Failed to create expense");
+      }
+    },
+    updateExpense: async (_, { id, description, amount, date }) => {
+      try {
+        const expense = await Expense.findByIdAndUpdate(
+          id,
+          { description, amount, date },
+          { new: true }
+        );
+        return expense;
+      } catch (error) {
+        console.error("Error updating expense:", error);
+        throw new Error("Failed to update expense");
+      }
+    },
+    deleteExpense: async (_, { id }) => {
+      try {
+        const expense = await Expense.findByIdAndDelete(id);
+        return expense;
+      } catch (error) {
+        console.error("Error deleting expense:", error);
+        throw new Error("Failed to delete expense");
+      }
+    },
+
+    submitContactForm: async (_, { name, email, message }) => {
+      try {
+        // 创建新的 ContactForm 实例
+        const contactForm = new ContactForm({
+          name,
+          email,
+          message,
+        });
+
+        // 将新创建的 ContactForm 保存到数据库
+        await contactForm.save();
+
+        // 返回 ContactForm 作为响应
+        return contactForm;
+      } catch (error) {
+        console.error("Error submitting contact form:", error);
+        throw new Error("Failed to submit contact form");
+      }
+    },
     register: async (parent, { username, password }) => {
       const passwordRegex = /^[A-Z].{5,}$/;
       if (!passwordRegex.test(password)) {
@@ -297,12 +643,9 @@ const scheduleSchema = new mongoose.Schema({
 });
 
 // 5. 连接到 MongoDB 数据库
-mongoose.connect(
-  uri,
-  {
-    useUnifiedTopology: true,
-  }
-);
+mongoose.connect(uri, {
+  useUnifiedTopology: true,
+});
 
 // 6. 定义 Todo 模型
 const Todo = mongoose.model("Todo", {
@@ -322,4 +665,10 @@ const server = new ApolloServer({
 
 server.listen({ port: process.env.PORT || 4000 }).then(({ url }) => {
   console.log(`Server is ${url}`);
+});
+
+// Start the Express server
+const PORT = process.env.PORT || 4001;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
