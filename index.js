@@ -1,4 +1,4 @@
-//mongodb+srv://ray10315332:GayqbQeJq5Jxh3em@cluster0.pberq7k.mongodb.net/
+
 
 const { ApolloServer, gql } = require("apollo-server");
 const express = require("express");
