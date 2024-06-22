@@ -1,5 +1,3 @@
-
-
 const { ApolloServer, gql } = require("apollo-server");
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -82,6 +80,13 @@ const Habitgoals = mongoose.model("habitgoals", {
   EDate: String,
 });
 
+const questionSchema = new mongoose.Schema({
+  question: String,
+  answer: String,
+});
+
+const Question = mongoose.model("Question", questionSchema);
+
 const contactFormSchema = new mongoose.Schema({
   name: String,
   email: String,
@@ -137,9 +142,53 @@ const expenseSchema = new mongoose.Schema({
 });
 
 const Expense = mongoose.model("Expense", expenseSchema);
+// 定义 HouseSymptoms 模型
+const houseSymptomsSchema = new mongoose.Schema({
+  labelName: String,
+  createDT: {
+    type: Date,
+    default: Date.now,
+  },
+  updateDT: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
+const HouseSymptoms = mongoose.model("HouseSymptoms", houseSymptomsSchema);
+const cooperativeExpertSchema = new mongoose.Schema({
+  company: String,
+  experience: Number,
+  serviceItem: [String],
+  picture: String,
+});
+
+const CooperativeExpert = mongoose.model(
+  "CooperativeExpert",
+  cooperativeExpertSchema
+);
+
+const recommendationArticleSchema = new mongoose.Schema({
+  tags: [String],
+  createDT: { type: Date, default: Date.now },
+  updateDT: { type: Date, default: Date.now },
+  articleLink: String,
+  description: String,
+  articleName: String,
+});
+
+const RecommendationArticle = mongoose.model(
+  "RecommendationArticle",
+  recommendationArticleSchema
+);
 // 定义GraphQL Schema
 const typeDefs = gql`
+  type Question {
+    id: ID!
+    question: String!
+    answer: String!
+  }
+
   type Todo {
     id: ID!
     task: String!
@@ -235,11 +284,84 @@ const typeDefs = gql`
     createdAt: String!
   }
 
-  type Query {
-    contactForms: [ContactForm]
+  type ContractForm {
+    id: ID!
+    isPublic: Boolean
+    HouseSymptoms: [HouseSymptoms]
+    Phone: String
+    address: Address
+    Name: String!
+    createDT: String!
+    updateDT: String!
+  }
 
-    # 根据 ID 获取特定的联系表单
+  type CooperativeExpert {
+    id: ID!
+    company: String!
+    experience: Int!
+    serviceItem: [String]!
+    picture: String
+  }
+
+  type HouseSymptoms {
+    id: ID!
+    labelName: String!
+    createDT: String!
+    updateDT: String!
+  }
+
+  type RecommendationArticle {
+    id: ID!
+    tags: [String]!
+    createDT: String!
+    updateDT: String!
+    articleLink: String
+    description: String
+    articleName: String
+  }
+
+  type Address {
+    city: String!
+    zone: String!
+  }
+
+  input AddressInput {
+    city: String!
+    zone: String!
+  }
+
+  input ContractFormInput {
+    isPublic: Boolean
+    HouseSymptoms: [ID]
+    Phone: String
+    address: AddressInput!
+    Name: String!
+  }
+
+  input CooperativeExpertInput {
+    company: String!
+    experience: Int!
+    serviceItem: [String]!
+    picture: String
+  }
+
+  input RecommendationArticleInput {
+    tags: [String]!
+    articleLink: String
+    description: String
+    articleName: String
+  }
+
+  type Query {
+    # questions: async (parent, args) => {
+    #   return await Question.find({ question: { $regex: args.keyword, $options: 'i' } });
+    # }
+
+    contactForms: [ContactForm]
     contactForm(id: ID!): ContactForm
+    cooperativeExperts: [CooperativeExpert]
+    houseSymptoms: [HouseSymptoms]
+    recommendationArticles: [RecommendationArticle]
 
     templates: [Template]
     template(id: ID!): Template
@@ -258,9 +380,43 @@ const typeDefs = gql`
 
     expenses: [Expense]
     expense(id: ID!): Expense
+
+    questions(keyword: String!): [Question]
   }
 
   type Mutation {
+    # addQuestion: async (parent, args) => {
+    #   const question = new Question({
+    #     question: args.question,
+    #     answer: args.answer
+    #   });
+    #   return await question.save();
+    # }
+    addQuestion(question: String!, answer: String!): Question
+    createContractForm(input: ContractFormInput!): ContractForm
+    updateContractForm(id: ID!, input: ContractFormInput!): ContractForm
+    deleteContractForm(id: ID!): ContractForm
+
+    createCooperativeExpert(input: CooperativeExpertInput!): CooperativeExpert
+    updateCooperativeExpert(
+      id: ID!
+      input: CooperativeExpertInput!
+    ): CooperativeExpert
+    deleteCooperativeExpert(id: ID!): CooperativeExpert
+
+    createHouseSymptoms(labelName: String!): HouseSymptoms
+    updateHouseSymptoms(id: ID!, labelName: String!): HouseSymptoms
+    deleteHouseSymptoms(id: ID!): HouseSymptoms
+
+    createRecommendationArticle(
+      input: RecommendationArticleInput!
+    ): RecommendationArticle
+    updateRecommendationArticle(
+      id: ID!
+      input: RecommendationArticleInput!
+    ): RecommendationArticle
+    deleteRecommendationArticle(id: ID!): RecommendationArticle
+
     createTemplate(name: String!, content: String!): Template
     updateTemplate(id: ID!, name: String, content: String): Template
     deleteTemplate(id: ID!): Template
@@ -318,6 +474,16 @@ const typeDefs = gql`
 // 4. 提供解析函数
 const resolvers = {
   Query: {
+    questions: async (parent, args) => {
+      return await Question.find({
+        question: { $regex: args.keyword, $options: "i" },
+      });
+    },
+    contactForms: async () => ContactForm.find(),
+    contactForm: async (_, { id }) => ContactForm.findById(id),
+    cooperativeExperts: async () => CooperativeExpert.find(),
+    houseSymptoms: async () => HouseSymptoms.find(),
+    recommendationArticles: async () => RecommendationArticle.find(),
     users: () => {
       try {
         console.log("Executing users resolver");
@@ -391,6 +557,57 @@ const resolvers = {
     },
   },
   Mutation: {
+    addQuestion: async (parent, args) => {
+      const question = new Question({
+        question: args.question,
+        answer: args.answer,
+      });
+      return await question.save();
+    },
+    createContractForm: async (_, { input }) => {
+      const newForm = new ContractForm(input);
+      return newForm.save();
+    },
+    updateContractForm: async (_, { id, input }) => {
+      return ContractForm.findByIdAndUpdate(id, input, { new: true });
+    },
+    deleteContractForm: async (_, { id }) => {
+      return ContractForm.findByIdAndDelete(id);
+    },
+
+    createCooperativeExpert: async (_, { input }) => {
+      const newExpert = new CooperativeExpert(input);
+      return newExpert.save();
+    },
+    updateCooperativeExpert: async (_, { id, input }) => {
+      return CooperativeExpert.findByIdAndUpdate(id, input, { new: true });
+    },
+    deleteCooperativeExpert: async (_, { id }) => {
+      return CooperativeExpert.findByIdAndDelete(id);
+    },
+
+    createHouseSymptoms: async (_, { labelName }) => {
+      const newSymptom = new HouseSymptoms({ labelName });
+      return newSymptom.save();
+    },
+    updateHouseSymptoms: async (_, { id, labelName }) => {
+      return HouseSymptoms.findByIdAndUpdate(id, { labelName }, { new: true });
+    },
+    deleteHouseSymptoms: async (_, { id }) => {
+      return HouseSymptoms.findByIdAndDelete(id);
+    },
+
+    createRecommendationArticle: async (_, { input }) => {
+      const newArticle = new RecommendationArticle(input);
+      return newArticle.save();
+    },
+    updateRecommendationArticle: async (_, { id, input }) => {
+      return RecommendationArticle.findByIdAndUpdate(id, input, { new: true });
+    },
+    deleteRecommendationArticle: async (_, { id }) => {
+      return RecommendationArticle.findByIdAndDelete(id);
+    },
+
     createTemplate: async (_, { name, content }) => {
       try {
         const template = new Template({ name, content });
