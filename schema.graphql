@@ -4,6 +4,135 @@ type Question {
   question: String!
   answer: String!
 }
+type Card {
+  C_IDX: Int
+  C_CARD: String
+  U_IDX: Int
+  C_PW: String
+  C_FP_COUNT: Int
+  C_FP_1: String
+  C_FP_2: String
+  C_FP_3: String
+  CREATETIME: String
+  EDITTIME: String
+}
+
+type History {
+  H_IDX: Int
+  H_CARD: String
+  H_DATE: String
+  H_TIME: String
+  H_DATETIME: String
+  H_STATE: String
+  H_RECVDATETIME: String
+  H_SUBREADER: String
+  H_SUBREADERNO: String
+  R_IDX: Int
+  H_READERMODEL: String
+}
+
+type Reader {
+  R_IDX: Int
+  R_NO: String
+  R_NAME: String
+  R_MODEL: String
+  R_INTERFACE: String
+  R_TIMEOUT: Int
+  R_PARAMETER: String
+  R_HOLIDAY: String
+  R_HOLIDAYCTRL: String
+  R_TIMEZONE: String
+  R_TIMEFRAME: String
+  R_TIMEZONEGROUP: String
+  R_BELL: String
+  R_LIGHT: String
+  R_LIGHT_NAME: String
+  R_MAP_IDX: Int
+  R_MAP_X: Int
+  R_MAP_Y: Int
+  SUBNAME_1: String
+  SUBNAME_2: String
+  SUBNAME_3: String
+  SUBNAME_4: String
+  SUBNAME_5: String
+  SUBNAME_6: String
+  SUBNAME_7: String
+  SUBNAME_8: String
+  POLLING: String
+  CREATETIME: String
+  EDITTIME: String
+}
+
+type Dep {
+  D_DEPNO: Int
+  D_NAME: String
+  D_NOTE: String
+}
+
+type Permit {
+  P_IDX: Int
+  G_IDX: Int
+  R_IDX: Int
+  P_TIMEZONEIDX: Int
+  P_TIMEZONEGROUPIDX: Int
+  P_READPOINT: String
+  CREATETIME: String
+  EDITTIME: String
+}
+
+type Worktime {
+  W_IDX: Int
+  W_NAME: String
+  W_ONDUTY_1: String
+  W_OFFDUTY_1: String
+  W_ONDUTY_2: String
+  W_OFFDUTY_2: String
+  W_OT_ONDUTY: String
+  W_OT_OFFDUTY: String
+  W_FLEXIBLE_TIME: String
+  FLEXIBLE: Boolean
+  CREATETIME: String
+  EDITTIME: String
+}
+
+type User {
+  U_IDX: Int
+  U_NAME: String
+  U_DEPNO: Int
+  U_WORKTIMEIDX: Int
+  U_GROUPIDX: Int
+  WORKNO: String
+  IDCARD: String
+  CELLPHONE: String
+  HOMEPHONE: String
+  EMAIL: String
+  NOTE: String
+  RESIDENCE: String
+  ADDRESS: String
+  PHOTO_FILE: String
+}
+
+type Uac {
+  U_IDX: Int
+  U_ID: String
+  U_PASSWORD: String
+  U_ACCESS: String
+  U_CREATE: String
+  U_FIX: String
+}
+
+type Attend {
+  AT_NO: Int
+  AT_USERNO: Int
+  AT_DATE: String
+  AT_CARD: String
+  AT_STATE: String
+  AT_NOTE: String
+  AT_INITIAL: String
+  AT_FIX_TIME: String
+  AT_FIX_USER: String
+  AT_CREATE_TIME: String
+}
 
 type Todo {
   id: ID!
@@ -31,7 +160,6 @@ type Schedule {
 
 type AuthPayload {
   token: String!
-  user: User!
 }
 
 type Query {
@@ -202,6 +330,25 @@ type Query {
   expense(id: ID!): Expense
 
   questions(keyword: String!): [Question]
+
+  cards: [Card]
+  card(C_IDX: Int): Card
+  histories: [History]
+  history(H_IDX: Int): History
+  readers: [Reader]
+  reader(R_IDX: Int): Reader
+  deps: [Dep]
+  dep(D_DEPNO: Int): Dep
+  permits: [Permit]
+  permit(P_IDX: Int): Permit
+  worktimes: [Worktime]
+  worktime(W_IDX: Int): Worktime
+  users: [User]
+  user(U_IDX: Int): User
+  uacs: [Uac]
+  uac(U_IDX: Int): Uac
+  attends: [Attend]
+  attend(AT_NO: Int): Attend
 }
 
 type Mutation {
@@ -212,6 +359,8 @@ type Mutation {
   #   });
   #   return await question.save();
   # }
+  # loginWithGoogle(): AuthPayload
+
   "建立問題"
   addQuestion(question: String!, answer: String!): Question
   "建立新的合約表單"
@@ -292,5 +441,210 @@ type Mutation {
 
   updateProfile(username: String, email: String): User
   changePassword(oldPassword: String!, newPassword: String!): Boolean
+
+  createCard(
+    C_CARD: String
+    U_IDX: Int
+    C_PW: String
+    C_FP_COUNT: Int
+    C_FP_1: String
+    C_FP_2: String
+    C_FP_3: String
+  ): Card
+  updateCard(
+    C_IDX: Int
+    C_CARD: String
+    U_IDX: Int
+    C_PW: String
+    C_FP_COUNT: Int
+    C_FP_1: String
+    C_FP_2: String
+    C_FP_3: String
+  ): Card
+  deleteCard(C_IDX: Int): Card
+  createHistory(
+    H_CARD: String
+    H_DATE: String
+    H_TIME: String
+    H_DATETIME: String
+    H_STATE: String
+    H_RECVDATETIME: String
+    H_SUBREADER: String
+    H_SUBREADERNO: String
+    R_IDX: Int
+    H_READERMODEL: String
+  ): History
+  updateHistory(
+    H_IDX: Int
+    H_CARD: String
+    H_DATE: String
+    H_TIME: String
+    H_DATETIME: String
+    H_STATE: String
+    H_RECVDATETIME: String
+    H_SUBREADER: String
+    H_SUBREADERNO: String
+    R_IDX: Int
+    H_READERMODEL: String
+  ): History
+  deleteHistory(H_IDX: Int): History
+  createReader(
+    R_NO: String
+    R_NAME: String
+    R_MODEL: String
+    R_INTERFACE: String
+    R_TIMEOUT: Int
+    R_PARAMETER: String
+    R_HOLIDAY: String
+    R_HOLIDAYCTRL: String
+    R_TIMEZONE: String
+    R_TIMEFRAME: String
+    R_TIMEZONEGROUP: String
+    R_BELL: String
+    R_LIGHT: String
+    R_LIGHT_NAME: String
+    R_MAP_IDX: Int
+    R_MAP_X: Int
+    R_MAP_Y: Int
+    SUBNAME_1: String
+    SUBNAME_2: String
+    SUBNAME_3: String
+    SUBNAME_4: String
+    SUBNAME_5: String
+    SUBNAME_6: String
+    SUBNAME_7: String
+    SUBNAME_8: String
+    POLLING: String
+  ): Reader
+  updateReader(
+    R_IDX: Int
+    R_NO: String
+    R_NAME: String
+    R_MODEL: String
+    R_INTERFACE: String
+    R_TIMEOUT: Int
+    R_PARAMETER: String
+    R_HOLIDAY: String
+    R_HOLIDAYCTRL: String
+    R_TIMEZONE: String
+    R_TIMEFRAME: String
+    R_TIMEZONEGROUP: String
+    R_BELL: String
+    R_LIGHT: String
+    R_LIGHT_NAME: String
+    R_MAP_IDX: Int
+    R_MAP_X: Int
+    R_MAP_Y: Int
+    SUBNAME_1: String
+    SUBNAME_2: String
+    SUBNAME_3: String
+    SUBNAME_4: String
+    SUBNAME_5: String
+    SUBNAME_6: String
+    SUBNAME_7: String
+    SUBNAME_8: String
+    POLLING: String
+  ): Reader
+  deleteReader(R_IDX: Int): Reader
+  createDep(D_DEPNO: Int, D_NAME: String, D_NOTE: String): Dep
+  updateDep(D_DEPNO: Int, D_NAME: String, D_NOTE: String): Dep
+  deleteDep(D_DEPNO: Int): Dep
+  createPermit(
+    G_IDX: Int
+    R_IDX: Int
+    P_TIMEZONEIDX: Int
+    P_TIMEZONEGROUPIDX: Int
+    P_READPOINT: String
+  ): Permit
+  updatePermit(
+    P_IDX: Int
+    G_IDX: Int
+    R_IDX: Int
+    P_TIMEZONEIDX: Int
+    P_TIMEZONEGROUPIDX: Int
+    P_READPOINT: String
+  ): Permit
+  deletePermit(P_IDX: Int): Permit
+  createWorktime(
+    W_NAME: String
+    W_ONDUTY_1: String
+    W_OFFDUTY_1: String
+    W_ONDUTY_2: String
+    W_OFFDUTY_2: String
+    W_OT_ONDUTY: String
+    W_OT_OFFDUTY: String
+    W_FLEXIBLE_TIME: String
+    FLEXIBLE: Boolean
+  ): Worktime
+  updateWorktime(
+    W_IDX: Int
+    W_NAME: String
+    W_ONDUTY_1: String
+    W_OFFDUTY_1: String
+    W_ONDUTY_2: String
+    W_OFFDUTY_2: String
+    W_OT_ONDUTY: String
+    W_OT_OFFDUTY: String
+    W_FLEXIBLE_TIME: String
+    FLEXIBLE: Boolean
+  ): Worktime
+  deleteWorktime(W_IDX: Int): Worktime
+  createUser(
+    U_NAME: String
+    U_DEPNO: Int
+    U_WORKTIMEIDX: Int
+    U_GROUPIDX: Int
+    WORKNO: String
+    IDCARD: String
+    CELLPHONE: String
+    HOMEPHONE: String
+    EMAIL: String
+    NOTE: String
+    RESIDENCE: String
+    ADDRESS: String
+    PHOTO_FILE: String
+  ): User
+  updateUser(
+    U_IDX: Int
+    U_NAME: String
+    U_DEPNO: Int
+    U_WORKTIMEIDX: Int
+    U_GROUPIDX: Int
+    WORKNO: String
+    IDCARD: String
+    CELLPHONE: String
+    HOMEPHONE: String
+    EMAIL: String
+    NOTE: String
+    RESIDENCE: String
+    ADDRESS: String
+    PHOTO_FILE: String
+  ): User
+  deleteUser(U_IDX: Int): User
+  createUac(U_ID: String, U_PASSWORD: String, U_ACCESS: String): Uac
+  updateUac(U_IDX: Int, U_ID: String, U_PASSWORD: String, U_ACCESS: String): Uac
+  deleteUac(U_IDX: Int): Uac
+  createAttend(
+    AT_USERNO: Int
+    AT_DATE: String
+    AT_CARD: String
+    AT_STATE: String
+    AT_NOTE: String
+    AT_INITIAL: String
+    AT_FIX_TIME: String
+    AT_FIX_USER: String
+  ): Attend
+  updateAttend(
+    AT_NO: Int
+    AT_USERNO: Int
+    AT_DATE: String
+    AT_CARD: String
+    AT_STATE: String
+    AT_NOTE: String
+    AT_INITIAL: String
+    AT_FIX_TIME: String
+    AT_FIX_USER: String
+  ): Attend
+  deleteAttend(AT_NO: Int): Attend
 }
 # `;
