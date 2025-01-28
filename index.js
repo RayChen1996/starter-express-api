@@ -20,48 +20,48 @@ mongoose.connect(uri, {
 });
 const app = express();
 
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/callback", // 这里的回调 URL 需要根据你的实际情况调整
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        // 在这里根据 profile 查找或创建用户
-        // 假设你的 UserModel 是用来存储用户信息的模型
-        const user = await UserModel.findOne({ googleId: profile.id });
+// passport.use(
+//   new GoogleStrategy(
+//     {
+//       clientID: process.env.GOOGLE_CLIENT_ID,
+//       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+//       callbackURL: "/auth/google/callback", // 这里的回调 URL 需要根据你的实际情况调整
+//     },
+//     async (accessToken, refreshToken, profile, done) => {
+//       try {
+//         // 在这里根据 profile 查找或创建用户
+//         // 假设你的 UserModel 是用来存储用户信息的模型
+//         const user = await UserModel.findOne({ googleId: profile.id });
 
-        if (!user) {
-          // 如果用户不存在，创建新用户
-          const newUser = new UserModel({
-            googleId: profile.id,
-            username: profile.displayName, // 假设使用 Google 的显示名称作为用户名
-          });
+//         if (!user) {
+//           // 如果用户不存在，创建新用户
+//           const newUser = new UserModel({
+//             googleId: profile.id,
+//             username: profile.displayName, // 假设使用 Google 的显示名称作为用户名
+//           });
 
-          await newUser.save();
-          done(null, newUser);
-        } else {
-          done(null, user);
-        }
-      } catch (error) {
-        done(error, null);
-      }
-    }
-  )
-);
+//           await newUser.save();
+//           done(null, newUser);
+//         } else {
+//           done(null, user);
+//         }
+//       } catch (error) {
+//         done(error, null);
+//       }
+//     }
+//   )
+// );
 
 // 序列化和反序列化用户
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
+// passport.serializeUser((user, done) => {
+//   done(null, user.id);
+// });
 
-passport.deserializeUser((id, done) => {
-  UserModel.findById(id, (err, user) => {
-    done(err, user);
-  });
-});
+// passport.deserializeUser((id, done) => {
+//   UserModel.findById(id, (err, user) => {
+//     done(err, user);
+//   });
+// });
 
 // passport.use(new GoogleStrategy({
 //   clientID: process.env.GOOGLE_CLIENT_ID,
